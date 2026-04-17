@@ -1,0 +1,17 @@
+# Pub publish ignore file
+# See https://dart.dev/guides/libraries/private-files#pubignore
+
+# Build and local tool files
+.dart_tool/
+.idea/
+.vscode/
+.local/
+build/
+*.iml
+
+# Example build artifacts
+example/build/
+example/.dart_tool/
+example/.flutter-plugins
+example/.flutter-plugins-dependencies
+example/pubspec.lock

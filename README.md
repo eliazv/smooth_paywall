@@ -7,9 +7,13 @@ A smooth, production-ready paywall UI for Flutter apps.
 
 Build elegant monetization screens with configurable themes, layouts and interaction states.
 
-![smooth_paywall demo](assets/readme/smooth_paywall_demo.gif)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/eliazv/smooth_paywall/main/assets/readme/white.gif" width="45%" alt="Smooth Paywall White" />
+  <img src="https://raw.githubusercontent.com/eliazv/smooth_paywall/main/assets/readme/black.gif" width="45%" alt="Smooth Paywall Black" />
+</p>
 
-Demo GIF is included in `assets/readme` and can be replaced with your latest recorded showcase before release.
+Demo GIFs are included in `assets/readme`.
+
 
 ## Why this package
 
