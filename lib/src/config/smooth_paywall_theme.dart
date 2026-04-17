@@ -14,6 +14,8 @@ class SmoothPaywallTheme {
   final TextStyle subtitleStyle;
   final TextStyle bodyStyle;
   final TextStyle ctaTextStyle;
+  /// Gradient colors for the title text. Null = default gold/accent gradient.
+  final List<Color>? titleGradientColors;
 
   const SmoothPaywallTheme({
     required this.backgroundTop,
@@ -28,9 +30,43 @@ class SmoothPaywallTheme {
     required this.subtitleStyle,
     required this.bodyStyle,
     required this.ctaTextStyle,
+    this.titleGradientColors,
   });
 
   factory SmoothPaywallTheme.light() {
+    return const SmoothPaywallTheme(
+      backgroundTop: Color(0xFFF2F2F7),
+      backgroundBottom: Color(0xFFFFFFFF),
+      cardColor: Color(0xFFFFFFFF),
+      borderColor: Color(0xFFE5E5EA),
+      primaryColor: Color(0xFF6F3DFF),
+      accentColor: Color(0xFF875CFF),
+      featureIconBackground: Color(0x1F6F3DFF),
+      errorColor: Color(0xFFEF4444),
+      titleStyle: TextStyle(
+        color: Color(0xFF1C1C1E),
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+      ),
+      subtitleStyle: TextStyle(
+        color: Color(0xFF3C3C43),
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyStyle: TextStyle(
+        color: Color(0xFF1C1C1E),
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      ctaTextStyle: TextStyle(
+        color: Color(0xFFFFFFFF),
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  factory SmoothPaywallTheme.dark() {
     return const SmoothPaywallTheme(
       backgroundTop: Color(0xFF0D1117),
       backgroundBottom: Color(0xFF0D1117),
@@ -63,10 +99,6 @@ class SmoothPaywallTheme {
     );
   }
 
-  factory SmoothPaywallTheme.dark() {
-    return SmoothPaywallTheme.light();
-  }
-
   factory SmoothPaywallTheme.adaptive(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return brightness == Brightness.dark
@@ -87,6 +119,7 @@ class SmoothPaywallTheme {
     TextStyle? subtitleStyle,
     TextStyle? bodyStyle,
     TextStyle? ctaTextStyle,
+    List<Color>? titleGradientColors,
   }) {
     return SmoothPaywallTheme(
       backgroundTop: backgroundTop ?? this.backgroundTop,
@@ -102,6 +135,7 @@ class SmoothPaywallTheme {
       subtitleStyle: subtitleStyle ?? this.subtitleStyle,
       bodyStyle: bodyStyle ?? this.bodyStyle,
       ctaTextStyle: ctaTextStyle ?? this.ctaTextStyle,
+      titleGradientColors: titleGradientColors ?? this.titleGradientColors,
     );
   }
 }

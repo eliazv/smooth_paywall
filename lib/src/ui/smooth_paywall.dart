@@ -13,7 +13,7 @@ typedef PaywallPurchaseHandler =
 
 class SmoothPaywall extends StatefulWidget {
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final List<PaywallFeature> features;
   final List<PaywallPlan> plans;
   final String ctaLabel;
@@ -40,14 +40,18 @@ class SmoothPaywall extends StatefulWidget {
   final void Function(String message)? onError;
   final Widget? headerLogo;
   final String? headerImagePath;
+  final bool isSubscribed;
+  final DateTime? subscriptionExpiryDate;
+  final String? subscribedCtaLabel;
+  final String? subscribedStatusLabel;
 
   const SmoothPaywall({
     super.key,
     required this.features,
     required this.plans,
-    this.title = 'Sblocca Premium',
-    this.subtitle = 'con 7 giorni di prova',
-    this.ctaLabel = 'Avvia 7 giorni gratis',
+    this.title = 'Go Premium',
+    this.subtitle,
+    this.ctaLabel = 'Get Started',
     this.restoreLabel = 'Ripristina',
     this.termsLabel = 'Termini',
     this.privacyLabel = 'Privacy',
@@ -71,6 +75,10 @@ class SmoothPaywall extends StatefulWidget {
     this.onError,
     this.headerLogo,
     this.headerImagePath,
+    this.isSubscribed = false,
+    this.subscriptionExpiryDate,
+    this.subscribedCtaLabel,
+    this.subscribedStatusLabel,
   }) : assert(plans.length > 0, 'plans cannot be empty');
 
   @override
@@ -222,12 +230,14 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
               const SizedBox(height: 20),
               _buildHeaderIllustration(theme),
               _buildPremiumTitle(theme),
-              const SizedBox(height: 6),
-              Text(
-                widget.subtitle,
-                style: theme.subtitleStyle,
-                textAlign: TextAlign.center,
-              ),
+              if (widget.subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  widget.subtitle!,
+                  style: theme.subtitleStyle,
+                  textAlign: TextAlign.center,
+                ),
+              ],
               const SizedBox(height: 14),
               _buildFeaturesList(theme),
               const SizedBox(height: 14),
@@ -253,10 +263,10 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: theme.bodyStyle.color?.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, color: Colors.white, size: 20),
+                child: Icon(Icons.close, color: theme.bodyStyle.color, size: 20),
               ),
             ),
           ),
@@ -360,7 +370,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
           shaderCallback: (bounds) => LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [const Color(0xFFFFD700), theme.accentColor],
+            colors: theme.titleGradientColors ?? [const Color(0xFFFFD700), theme.accentColor],
           ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
           blendMode: BlendMode.srcIn,
           child: Text(
@@ -402,18 +412,10 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                             style: const TextStyle(fontSize: 22),
                           )
                         else
-                          Container(
-                            width: 26,
-                            height: 26,
-                            decoration: BoxDecoration(
-                              color: theme.primaryColor.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              feature.icon ?? Icons.check,
-                              size: 16,
-                              color: Colors.white,
-                            ),
+                          Icon(
+                            feature.icon ?? Icons.check,
+                            size: 22,
+                            color: theme.primaryColor,
                           ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -440,6 +442,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
             label: widget.restoreLabel,
             onTap: _handleRestore,
             primaryColor: theme.primaryColor,
+            labelColor: theme.bodyStyle.color ?? Colors.white,
           ),
         if (widget.showLegalActions)
           _BottomActionButton(
@@ -447,6 +450,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
             label: widget.privacyLabel,
             onTap: widget.onPrivacyTap,
             primaryColor: theme.primaryColor,
+            labelColor: theme.bodyStyle.color ?? Colors.white,
           ),
         if (widget.showLegalActions)
           _BottomActionButton(
@@ -454,6 +458,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
             label: widget.termsLabel,
             onTap: widget.onTermsTap,
             primaryColor: theme.primaryColor,
+            labelColor: theme.bodyStyle.color ?? Colors.white,
           ),
       ],
     );
@@ -479,12 +484,71 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (widget.layoutType == PaywallLayoutType.subscription)
+          if (widget.isSubscribed) _buildSubscribedBanner(theme),
+          if (!widget.isSubscribed &&
+              widget.layoutType == PaywallLayoutType.subscription)
             _buildSubscriptionPlans(theme),
-          if (widget.layoutType == PaywallLayoutType.subscription)
+          if (!widget.isSubscribed &&
+              widget.layoutType == PaywallLayoutType.subscription)
             const SizedBox(height: 20),
-          _buildStatusBanner(theme),
+          if (!widget.isSubscribed) _buildStatusBanner(theme),
           _buildCtaButton(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscribedBanner(SmoothPaywallTheme theme) {
+    final expiryDate = widget.subscriptionExpiryDate;
+    final expiryText = expiryDate != null
+        ? 'Rinnovo il ${expiryDate.day}/${expiryDate.month}/${expiryDate.year}'
+        : null;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.primaryColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.primaryColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.workspace_premium,
+            color: theme.bodyStyle.color,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.subscribedStatusLabel ?? 'Active subscription',
+                  style: TextStyle(
+                    color: theme.bodyStyle.color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                if (expiryText != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    expiryText,
+                    style: TextStyle(
+                      color: theme.bodyStyle.color?.withValues(alpha: 0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -511,6 +575,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                 accentColor: theme.accentColor,
                 cardColor: theme.cardColor,
                 borderColor: theme.borderColor,
+                textColor: theme.bodyStyle.color ?? Colors.white,
               ),
             ),
           ),
@@ -560,41 +625,65 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
 
   Widget _buildCtaButton(SmoothPaywallTheme theme) {
     final loading = _controller.state == PaywallActionState.loading;
+    final subscribed = widget.isSubscribed;
+    final label = subscribed
+        ? (widget.subscribedCtaLabel ?? 'Abbonato')
+        : widget.ctaLabel;
 
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: loading ? null : _handlePurchase,
+        onPressed: (loading || subscribed) ? null : _handlePurchase,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          elevation: 8,
+          elevation: subscribed ? 0 : 8,
           shadowColor: theme.primaryColor.withValues(alpha: 0.5),
+          disabledBackgroundColor: subscribed
+              ? theme.primaryColor.withValues(alpha: 0.15)
+              : null,
         ),
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.primaryColor, theme.accentColor],
-            ),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Container(
-            alignment: Alignment.center,
-            child: loading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+        child: subscribed
+            ? Container(
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: theme.primaryColor, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: theme.ctaTextStyle.copyWith(
+                        color: theme.primaryColor,
+                      ),
                     ),
-                  )
-                : Text(widget.ctaLabel, style: theme.ctaTextStyle),
-          ),
-        ),
+                  ],
+                ),
+              )
+            : Ink(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [theme.primaryColor, theme.accentColor],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  child: loading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(label, style: theme.ctaTextStyle),
+                ),
+              ),
       ),
     );
   }
@@ -605,12 +694,14 @@ class _BottomActionButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
   final Color primaryColor;
+  final Color labelColor;
 
   const _BottomActionButton({
     required this.icon,
     required this.label,
     required this.onTap,
     required this.primaryColor,
+    required this.labelColor,
   });
 
   @override
@@ -633,7 +724,7 @@ class _BottomActionButton extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: labelColor.withValues(alpha: 0.85),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -651,6 +742,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
   final Color accentColor;
   final Color cardColor;
   final Color borderColor;
+  final Color textColor;
 
   const _SubscriptionPlanCard({
     required this.plan,
@@ -659,6 +751,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
     required this.accentColor,
     required this.cardColor,
     required this.borderColor,
+    required this.textColor,
   });
 
   @override
@@ -697,7 +790,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
                   Text(
                     plan.title,
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white70,
+                      color: isSelected ? textColor : textColor.withValues(alpha: 0.6),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -710,7 +803,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: isSelected ? primaryColor : Colors.transparent,
                       border: Border.all(
-                        color: isSelected ? primaryColor : Colors.white30,
+                        color: isSelected ? primaryColor : textColor.withValues(alpha: 0.2),
                         width: 2,
                       ),
                     ),
@@ -727,7 +820,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
                     TextSpan(
                       text: plan.priceLabel,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white70,
+                        color: isSelected ? textColor : textColor.withValues(alpha: 0.6),
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -737,8 +830,8 @@ class _SubscriptionPlanCard extends StatelessWidget {
                         text: plan.periodLabel!,
                         style: TextStyle(
                           color: isSelected
-                              ? Colors.white.withValues(alpha: 0.7)
-                              : Colors.white54,
+                              ? textColor.withValues(alpha: 0.7)
+                              : textColor.withValues(alpha: 0.4),
                           fontSize: 14,
                         ),
                       ),

@@ -7,14 +7,14 @@ void main() {
     PaywallPlan(
       id: 'yearly',
       title: 'Yearly',
-      priceLabel: '\$24.99',
+      priceLabel: r'$24.99',
       periodLabel: '/year',
       badge: 'Save 50%',
     ),
     PaywallPlan(
       id: 'monthly',
       title: 'Monthly',
-      priceLabel: '\$4.99',
+      priceLabel: r'$4.99',
       periodLabel: '/month',
     ),
   ];
@@ -46,6 +46,47 @@ void main() {
     expect(find.textContaining('Start now'), findsOneWidget);
   });
 
+  testWidgets('subtitle is hidden when null', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            subtitle: null,
+            features: features,
+            plans: plans,
+            embedded: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('trial'), findsNothing);
+    expect(find.textContaining('prova'), findsNothing);
+  });
+
+  testWidgets('subtitle renders when provided', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            subtitle: '7-day free trial',
+            features: features,
+            plans: plans,
+            embedded: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('7-day free trial'), findsOneWidget);
+  });
+
   testWidgets('calls purchase handler and shows success state', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -71,5 +112,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('All set!'), findsOneWidget);
+  });
+
+  testWidgets('shows subscribed banner when isSubscribed is true',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            features: features,
+            plans: plans,
+            embedded: true,
+            isSubscribed: true,
+            subscribedStatusLabel: 'Pro active',
+            subscribedCtaLabel: 'Subscribed',
+            subscriptionExpiryDate: DateTime(2025, 12, 31),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pro active'), findsOneWidget);
+    expect(find.textContaining('31/12/2025'), findsOneWidget);
+    expect(find.textContaining('Subscribed'), findsOneWidget);
   });
 }
