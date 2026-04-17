@@ -1,6 +1,6 @@
 name: smooth_paywall
 description: "A modern, customizable paywall UI for Flutter apps with optional smooth_bottom_sheet integration."
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/eliazv/smooth_paywall
 repository: https://github.com/eliazv/smooth_paywall
 issue_tracker: https://github.com/eliazv/smooth_paywall/issues

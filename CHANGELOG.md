@@ -1,3 +1,8 @@
+## 0.0.3
+
+- Fixed README GIF previews for pub.dev by using absolute GitHub URLs.
+- Removed legacy "Cashew" references from documentation and assets.
+
 ## 0.0.2
 
 - `subtitle` is now nullable — omit it entirely for paywalls without trial text.
