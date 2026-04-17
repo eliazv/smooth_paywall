@@ -14,7 +14,6 @@ Build elegant monetization screens with configurable themes, layouts and interac
 
 Demo GIFs are included in `assets/readme`.
 
-
 ## Why this package
 
 Most paywall implementations are tightly coupled to billing SDK details or hardcoded designs.
@@ -111,18 +110,19 @@ See `example/lib/main.dart` for a complete demo with:
 
 ## Author
 
-Created by Elia Zavatta.
+Created by **Elia Zavatta**.
 
 I build production-ready Flutter apps and reusable UI components.
 
-- GitHub: https://github.com/eliazv
-- LinkedIn: https://www.linkedin.com/in/eliazavatta/
-- Email: info@eliazavatta.it
+- GitHub: [github.com/eliazv](https://github.com/eliazv)
+- LinkedIn: [linkedin.com/in/eliazavatta](https://www.linkedin.com/in/eliazavatta/)
+- Email: [info@eliazavatta.it](mailto:info@eliazavatta.it)
 
 ## Related smooth packages
 
-- smooth_bottom_sheet
-- smooth_onboarding
+- [smooth_bottom_sheet](https://pub.dev/packages/smooth_bottom_sheet)
+- [smooth_charts](https://pub.dev/packages/smooth_charts)
+- [smooth_infinite_tab_bar](https://pub.dev/packages/smooth_infinite_tab_bar)
 
 ## License
 
