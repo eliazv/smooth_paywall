@@ -2,6 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/smooth_paywall.svg)](https://pub.dev/packages/smooth_paywall)
 [![likes](https://img.shields.io/pub/likes/smooth_paywall)](https://pub.dev/packages/smooth_paywall)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/elizavatta)
 
 A smooth, production-ready paywall UI for Flutter apps.
 
@@ -121,6 +122,14 @@ I build production-ready Flutter apps and reusable UI components.
 - [smooth_bottom_sheet](https://pub.dev/packages/smooth_bottom_sheet)
 - [smooth_charts](https://pub.dev/packages/smooth_charts)
 - [smooth_infinite_tab_bar](https://pub.dev/packages/smooth_infinite_tab_bar)
+- [smooth_onboarding](https://pub.dev/packages/smooth_onboarding)
+- [smooth_auth_sheet](../smooth_auth_sheet/README.md)
+- [smooth_ui_showcase](../smooth_ui_showcase/README.md)
+
+## LLM and SEO keywords
+
+Flutter paywall, subscription screen, in-app purchase UI, monetization UI,
+trial offer screen, premium plans widget, reusable paywall component.
 
 ## License
 

@@ -11,40 +11,112 @@ import '../models/paywall_plan.dart';
 typedef PaywallPurchaseHandler =
     Future<PaywallActionResult> Function(PaywallPlan selectedPlan);
 
+/// A premium, highly customizable paywall widget for Flutter.
+///
+/// It supports features like list of benefits, multiple subscription plans,
+/// custom theme and layout, and integrated state management via [SmoothPaywallController].
 class SmoothPaywall extends StatefulWidget {
+  /// The main title of the paywall.
   final String title;
+
+  /// A subtitle displayed below the title.
   final String? subtitle;
+
+  /// The list of features/benefits to display.
   final List<PaywallFeature> features;
+
+  /// The list of purchase plans available.
   final List<PaywallPlan> plans;
+
+  /// The label for the primary call-to-action button.
   final String ctaLabel;
+
+  /// The label for the restore purchases action.
   final String restoreLabel;
+
+  /// The label for the terms of service link.
   final String termsLabel;
+
+  /// The label for the privacy policy link.
   final String privacyLabel;
+
+  /// Custom label for the active status (e.g. "Subscribed").
   final String? statusActiveLabel;
+
+  /// Custom label for error fallback messages.
   final String? statusErrorFallbackLabel;
+
+  /// Whether to show the close button in the top corner.
   final bool showCloseButton;
+
+  /// Whether to show the restore action button.
   final bool showRestoreAction;
+
+  /// Whether to show the legal actions (terms, privacy).
   final bool showLegalActions;
+
+  /// Whether the paywall is embedded in another view (e.g. not a full-screen scaffold).
   final bool embedded;
+
+  /// The layout style (subscription or one-time).
   final PaywallLayoutType layoutType;
+
+  /// The theme configuration.
   final SmoothPaywallTheme? theme;
+
+  /// The layout configuration.
   final SmoothPaywallLayout layout;
+
+  /// The entrance animation configuration.
   final SmoothPaywallAnimation animation;
+
+  /// The controller for managing the paywall state.
   final SmoothPaywallController? controller;
+
+  /// Callback triggered when the primary CTA is pressed to perform a purchase.
   final PaywallPurchaseHandler? onPurchase;
+
+  /// Callback triggered when the restore button is pressed.
   final Future<void> Function()? onRestore;
+
+  /// Callback triggered when the terms of service link is pressed.
   final VoidCallback? onTermsTap;
+
+  /// Callback triggered when the privacy policy link is pressed.
   final VoidCallback? onPrivacyTap;
+
+  /// Callback triggered when the close button is pressed.
   final VoidCallback? onClose;
+
+  /// Callback triggered after a successful purchase.
   final void Function(PaywallPlan plan)? onSuccess;
+
+  /// Callback triggered when an error occurs.
   final void Function(String message)? onError;
+
+  /// An optional widget to display as a logo in the header.
   final Widget? headerLogo;
+
+  /// Whether to show the background gradient.
+  /// When false, uses solid background color from theme.
+  final bool showGradientBackground;
+
+  /// An optional asset path for a header illustration.
   final String? headerImagePath;
+
+  /// Whether the user is currently subscribed.
   final bool isSubscribed;
+
+  /// The expiry date of the current subscription.
   final DateTime? subscriptionExpiryDate;
+
+  /// CTA label to show when the user is already subscribed.
   final String? subscribedCtaLabel;
+
+  /// Status label to show when the user is already subscribed.
   final String? subscribedStatusLabel;
 
+  /// Creates a [SmoothPaywall].
   const SmoothPaywall({
     super.key,
     required this.features,
@@ -79,6 +151,7 @@ class SmoothPaywall extends StatefulWidget {
     this.subscriptionExpiryDate,
     this.subscribedCtaLabel,
     this.subscribedStatusLabel,
+    this.showGradientBackground = true,
   }) : assert(plans.length > 0, 'plans cannot be empty');
 
   @override
@@ -207,22 +280,23 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
 
     final stack = Stack(
       children: [
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  theme.primaryColor.withValues(alpha: 0.15),
-                  theme.backgroundBottom,
-                  theme.backgroundBottom,
-                ],
-                stops: const [0, 0.3, 1],
+        if (widget.showGradientBackground)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.primaryColor.withValues(alpha: 0.15),
+                    theme.backgroundBottom,
+                    theme.backgroundBottom,
+                  ],
+                  stops: const [0, 0.3, 1],
+                ),
               ),
             ),
           ),
-        ),
         SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 280),
           child: Column(
@@ -266,7 +340,11 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                   color: theme.bodyStyle.color?.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.close, color: theme.bodyStyle.color, size: 20),
+                child: Icon(
+                  Icons.close,
+                  color: theme.bodyStyle.color,
+                  size: 20,
+                ),
               ),
             ),
           ),
@@ -370,7 +448,9 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
           shaderCallback: (bounds) => LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: theme.titleGradientColors ?? [const Color(0xFFFFD700), theme.accentColor],
+            colors:
+                theme.titleGradientColors ??
+                [const Color(0xFFFFD700), theme.accentColor],
           ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
           blendMode: BlendMode.srcIn,
           child: Text(
@@ -511,17 +591,11 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       decoration: BoxDecoration(
         color: theme.primaryColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.primaryColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.workspace_premium,
-            color: theme.bodyStyle.color,
-            size: 20,
-          ),
+          Icon(Icons.workspace_premium, color: theme.bodyStyle.color, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -652,7 +726,11 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.check_circle, color: theme.primaryColor, size: 20),
+                    Icon(
+                      Icons.check_circle,
+                      color: theme.primaryColor,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       label,
@@ -790,7 +868,9 @@ class _SubscriptionPlanCard extends StatelessWidget {
                   Text(
                     plan.title,
                     style: TextStyle(
-                      color: isSelected ? textColor : textColor.withValues(alpha: 0.6),
+                      color: isSelected
+                          ? textColor
+                          : textColor.withValues(alpha: 0.6),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -803,7 +883,9 @@ class _SubscriptionPlanCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: isSelected ? primaryColor : Colors.transparent,
                       border: Border.all(
-                        color: isSelected ? primaryColor : textColor.withValues(alpha: 0.2),
+                        color: isSelected
+                            ? primaryColor
+                            : textColor.withValues(alpha: 0.2),
                         width: 2,
                       ),
                     ),
@@ -817,10 +899,25 @@ class _SubscriptionPlanCard extends StatelessWidget {
               RichText(
                 text: TextSpan(
                   children: [
+                    if (plan.originalPrice != null) ...[
+                      TextSpan(
+                        text: plan.originalPrice!,
+                        style: TextStyle(
+                          color: isSelected
+                              ? textColor
+                              : textColor.withValues(alpha: 0.6),
+                          fontSize: 16,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const TextSpan(text: '  '),
+                    ],
                     TextSpan(
                       text: plan.priceLabel,
                       style: TextStyle(
-                        color: isSelected ? textColor : textColor.withValues(alpha: 0.6),
+                        color: isSelected
+                            ? textColor
+                            : textColor.withValues(alpha: 0.6),
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
