@@ -97,9 +97,16 @@ class SmoothPaywall extends StatefulWidget {
   /// An optional widget to display as a logo in the header.
   final Widget? headerLogo;
 
+  /// Whether to show the default premium icon when no custom header media is provided.
+  final bool showDefaultHeaderIcon;
+
   /// Whether to show the background gradient.
   /// When false, uses solid background color from theme.
   final bool showGradientBackground;
+
+  /// Whether the bottom purchase panel should float above the edges.
+  /// When false, it behaves like an attached bottom sheet.
+  final bool useFloatingPlanSheet;
 
   /// An optional asset path for a header illustration.
   final String? headerImagePath;
@@ -146,12 +153,14 @@ class SmoothPaywall extends StatefulWidget {
     this.onSuccess,
     this.onError,
     this.headerLogo,
+    this.showDefaultHeaderIcon = true,
     this.headerImagePath,
     this.isSubscribed = false,
     this.subscriptionExpiryDate,
     this.subscribedCtaLabel,
     this.subscribedStatusLabel,
     this.showGradientBackground = true,
+    this.useFloatingPlanSheet = true,
   }) : assert(plans.length > 0, 'plans cannot be empty');
 
   @override
@@ -279,6 +288,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
     final theme = widget.theme ?? SmoothPaywallTheme.adaptive(context);
 
     final stack = Stack(
+      fit: StackFit.expand,
       children: [
         if (widget.showGradientBackground)
           Positioned.fill(
@@ -298,18 +308,22 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
             ),
           ),
         SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 280),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 248),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-              _buildHeaderIllustration(theme),
+              const SizedBox(height: 8),
+              if (_shouldShowHeaderIllustration) ...[
+                _buildHeaderIllustration(theme),
+                const SizedBox(height: 12),
+              ],
               _buildPremiumTitle(theme),
               if (widget.subtitle != null) ...[
                 const SizedBox(height: 6),
                 Text(
                   widget.subtitle!,
                   style: theme.subtitleStyle,
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.left,
                 ),
               ],
               const SizedBox(height: 14),
@@ -334,18 +348,8 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
             child: IconButton(
               onPressed:
                   widget.onClose ?? () => Navigator.of(context).maybePop(),
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.bodyStyle.color?.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.close,
-                  color: theme.bodyStyle.color,
-                  size: 20,
-                ),
-              ),
+              splashRadius: 18,
+              icon: Icon(Icons.close, color: theme.bodyStyle.color, size: 20),
             ),
           ),
       ],
@@ -380,22 +384,30 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
     );
   }
 
+  bool get _shouldShowHeaderIllustration =>
+      widget.headerLogo != null ||
+      widget.headerImagePath != null ||
+      widget.showDefaultHeaderIcon;
+
   Widget _buildHeaderIllustration(SmoothPaywallTheme theme) {
     if (widget.headerLogo != null) {
-      return SizedBox(width: 150, height: 150, child: widget.headerLogo!);
+      return SizedBox(width: 112, height: 112, child: widget.headerLogo!);
     }
     if (widget.headerImagePath != null) {
       return Image.asset(
         widget.headerImagePath!,
-        width: 150,
-        height: 150,
+        width: 112,
+        height: 112,
         fit: BoxFit.contain,
       );
     }
+    if (!widget.showDefaultHeaderIcon) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
-      width: 120,
-      height: 120,
+      width: 92,
+      height: 92,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -418,7 +430,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       ),
       child: const Icon(
         Icons.workspace_premium,
-        size: 60,
+        size: 46,
         color: Color(0xFFFFD700),
       ),
     );
@@ -426,45 +438,14 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
 
   Widget _buildPremiumTitle(SmoothPaywallTheme theme) {
     const fontSize = 28.0;
-    final text = widget.title.toUpperCase();
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 2
-              ..color = Colors.black.withValues(alpha: 0.45),
-          ),
-        ),
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors:
-                theme.titleGradientColors ??
-                [const Color(0xFFFFD700), theme.accentColor],
-          ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-          blendMode: BlendMode.srcIn,
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      widget.title,
+      textAlign: TextAlign.left,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        color: theme.titleStyle.color ?? theme.bodyStyle.color ?? Colors.white,
+      ),
     );
   }
 
@@ -545,32 +526,36 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   }
 
   Widget _buildFixedSheet(SmoothPaywallTheme theme) {
+    final floating = widget.useFloatingPlanSheet;
+
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: floating
+          ? const EdgeInsets.fromLTRB(12, 8, 12, 12)
+          : EdgeInsets.zero,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(40),
+        borderRadius: floating
+            ? BorderRadius.circular(40)
+            : const BorderRadius.vertical(top: Radius.circular(32)),
         border: Border.all(color: theme.borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            spreadRadius: 5,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        boxShadow: floating
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                  offset: const Offset(0, -5),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.isSubscribed) _buildSubscribedBanner(theme),
-          if (!widget.isSubscribed &&
-              widget.layoutType == PaywallLayoutType.subscription)
-            _buildSubscriptionPlans(theme),
-          if (!widget.isSubscribed &&
-              widget.layoutType == PaywallLayoutType.subscription)
-            const SizedBox(height: 20),
+          if (!widget.isSubscribed) _buildSubscriptionPlans(theme),
+          if (!widget.isSubscribed) const SizedBox(height: 16),
           if (!widget.isSubscribed) _buildStatusBanner(theme),
           _buildCtaButton(theme),
         ],
@@ -629,14 +614,25 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   }
 
   Widget _buildSubscriptionPlans(SmoothPaywallTheme theme) {
+    final useCompactStack = widget.plans.length >= 3;
     final planCards = widget.plans.map((plan) {
       final isSelected = plan.id == _selectedPlan.id;
+      final isLifetimePlan = plan.id.toLowerCase() == 'lifetime';
+      final periodLabel =
+          plan.periodLabel ??
+          (widget.layoutType == PaywallLayoutType.oneTime || isLifetimePlan
+              ? ' for life'
+              : null);
 
       return GestureDetector(
         onTap: () => _controller.selectPlan(plan.id),
         child: _SubscriptionPlanCard(
           plan: plan,
           isSelected: isSelected,
+          compact: useCompactStack,
+          layoutType: widget.layoutType,
+          isLifetimePlan: isLifetimePlan,
+          periodLabel: periodLabel,
           primaryColor: theme.primaryColor,
           accentColor: theme.accentColor,
           cardColor: theme.cardColor,
@@ -825,6 +821,10 @@ class _BottomActionButton extends StatelessWidget {
 class _SubscriptionPlanCard extends StatelessWidget {
   final PaywallPlan plan;
   final bool isSelected;
+  final bool compact;
+  final PaywallLayoutType layoutType;
+  final bool isLifetimePlan;
+  final String? periodLabel;
   final Color primaryColor;
   final Color accentColor;
   final Color cardColor;
@@ -834,6 +834,10 @@ class _SubscriptionPlanCard extends StatelessWidget {
   const _SubscriptionPlanCard({
     required this.plan,
     required this.isSelected,
+    required this.compact,
+    required this.layoutType,
+    required this.isLifetimePlan,
+    required this.periodLabel,
     required this.primaryColor,
     required this.accentColor,
     required this.cardColor,
@@ -843,16 +847,28 @@ class _SubscriptionPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showBadge =
+        layoutType != PaywallLayoutType.oneTime &&
+        !isLifetimePlan &&
+        plan.badge != null;
+    final titleColor = isSelected
+        ? textColor
+        : textColor.withValues(alpha: 0.6);
+    final secondaryColor = isSelected
+        ? textColor.withValues(alpha: 0.72)
+        : textColor.withValues(alpha: 0.44);
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 12 : 14,
+            vertical: compact ? 10 : 14,
+          ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? primaryColor.withValues(alpha: 0.15)
-                : cardColor,
+            color: cardColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected ? primaryColor : borderColor,
@@ -870,6 +886,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -877,17 +894,15 @@ class _SubscriptionPlanCard extends StatelessWidget {
                   Text(
                     plan.title,
                     style: TextStyle(
-                      color: isSelected
-                          ? textColor
-                          : textColor.withValues(alpha: 0.6),
-                      fontSize: 16,
+                      color: titleColor,
+                      fontSize: compact ? 15 : 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    width: 24,
-                    height: 24,
+                    width: compact ? 20 : 24,
+                    height: compact ? 20 : 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isSelected ? primaryColor : Colors.transparent,
@@ -899,12 +914,16 @@ class _SubscriptionPlanCard extends StatelessWidget {
                       ),
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        ? Icon(
+                            Icons.check,
+                            size: compact ? 13 : 16,
+                            color: Colors.white,
+                          )
                         : null,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: compact ? 6 : 10),
               RichText(
                 text: TextSpan(
                   children: [
@@ -912,10 +931,9 @@ class _SubscriptionPlanCard extends StatelessWidget {
                       TextSpan(
                         text: plan.originalPrice!,
                         style: TextStyle(
-                          color: isSelected
-                              ? textColor
-                              : textColor.withValues(alpha: 0.6),
-                          fontSize: 16,
+                          color: secondaryColor,
+                          fontSize: compact ? 13 : 15,
+                          fontWeight: FontWeight.w400,
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
@@ -924,21 +942,18 @@ class _SubscriptionPlanCard extends StatelessWidget {
                     TextSpan(
                       text: plan.priceLabel,
                       style: TextStyle(
-                        color: isSelected
-                            ? textColor
-                            : textColor.withValues(alpha: 0.6),
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        color: titleColor,
+                        fontSize: compact ? 17 : 20,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    if (plan.periodLabel != null)
+                    if (periodLabel != null)
                       TextSpan(
-                        text: plan.periodLabel!,
+                        text: periodLabel!,
                         style: TextStyle(
-                          color: isSelected
-                              ? textColor.withValues(alpha: 0.7)
-                              : textColor.withValues(alpha: 0.4),
-                          fontSize: 14,
+                          color: secondaryColor,
+                          fontSize: compact ? 12 : 14,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                   ],
@@ -947,13 +962,13 @@ class _SubscriptionPlanCard extends StatelessWidget {
             ],
           ),
         ),
-        if (plan.badge != null)
+        if (showBadge)
           Positioned(
             top: -10,
-            left: 0,
-            right: 0,
+            left: compact ? null : 0,
+            right: compact ? 12 : 0,
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: compact ? Alignment.topRight : Alignment.topCenter,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,

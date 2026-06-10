@@ -48,6 +48,8 @@ import 'package:smooth_paywall/smooth_paywall.dart';
 SmoothPaywall(
 	title: 'Unlock Premium',
 	subtitle: 'Choose the best plan for you.',
+	showDefaultHeaderIcon: false,
+	useFloatingPlanSheet: false,
 	features: const [
 		PaywallFeature(title: 'No ads', icon: Icons.block),
 		PaywallFeature(title: 'Priority support', icon: Icons.support_agent),
@@ -56,20 +58,21 @@ SmoothPaywall(
 		PaywallPlan(
 			id: 'yearly',
 			title: 'Yearly',
-			priceLabel: '\$24.99',
+			priceLabel: '€24.99',
+			originalPrice: '€39.99',
 			periodLabel: '/year',
 			badge: 'Best value',
 		),
 		PaywallPlan(
 			id: 'monthly',
 			title: 'Monthly',
-			priceLabel: '\$4.99',
+			priceLabel: '€4.99',
 			periodLabel: '/month',
 		),
 		PaywallPlan(
 			id: 'lifetime',
 			title: 'Lifetime',
-			priceLabel: '\$49.99',
+			priceLabel: '€49.99',
 			badge: 'One-time',
 			description: 'Pay once, keep Premium forever.',
 		),
@@ -82,6 +85,10 @@ SmoothPaywall(
 ```
 
 When `plans.length` is `1` or `2`, plans are displayed side by side. With `3` or more plans, the paywall automatically switches to a single-column stack for cleaner spacing and better readability.
+The title is left-aligned, and you can hide the default header icon with `showDefaultHeaderIcon: false`.
+Set `useFloatingPlanSheet: false` to switch the lower card from floating to an attached bottom-sheet style.
+In `PaywallLayoutType.oneTime`, badges and descriptions are hidden on the plan card and the price automatically shows `for life` when no `periodLabel` is provided.
+Use `originalPrice` to show a struck-through old price above the current discounted price.
 
 ## Optional integration with smooth_bottom_sheet
 

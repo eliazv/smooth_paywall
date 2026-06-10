@@ -64,9 +64,10 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('UNLOCK PRO'), findsWidgets);
+    expect(find.text('Unlock Pro'), findsOneWidget);
     expect(find.text('Yearly'), findsOneWidget);
     expect(find.text('Lifetime'), findsOneWidget);
+    expect(find.text('One-time'), findsNothing);
     expect(find.textContaining('Start now'), findsOneWidget);
   });
 
@@ -161,6 +162,143 @@ void main() {
 
     expect(find.text('7-day free trial'), findsOneWidget);
   });
+
+  testWidgets('renders original price when a discount is configured', (
+    tester,
+  ) async {
+    const discountedPlans = [
+      PaywallPlan(
+        id: 'yearly',
+        title: 'Yearly',
+        priceLabel: r'$24.99',
+        originalPrice: r'$39.99',
+        periodLabel: '/year',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            features: features,
+            plans: discountedPlans,
+            embedded: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains(r'$39.99') &&
+            widget.text.toPlainText().contains(r'$24.99'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('can hide the default header icon', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            features: features,
+            plans: plans,
+            embedded: true,
+            showDefaultHeaderIcon: false,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.workspace_premium), findsNothing);
+  });
+
+  testWidgets('can use an attached bottom-sheet style purchase panel', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            features: features,
+            plans: plans,
+            embedded: true,
+            useFloatingPlanSheet: false,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final attachedSheetFinder = find.byWidgetPredicate((widget) {
+      if (widget is! Container) {
+        return false;
+      }
+
+      final decoration = widget.decoration;
+      if (decoration is! BoxDecoration) {
+        return false;
+      }
+
+      return decoration.borderRadius ==
+          const BorderRadius.vertical(top: Radius.circular(32));
+    });
+
+    expect(attachedSheetFinder, findsOneWidget);
+  });
+
+  testWidgets(
+    'one-time layout hides badge and description, and shows for life',
+    (tester) async {
+      const oneTimePlans = [
+        PaywallPlan(
+          id: 'lifetime',
+          title: 'Lifetime',
+          priceLabel: r'$49.99',
+          badge: 'One-time',
+          description: 'Pay once, keep access forever.',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SmoothPaywall(
+              title: 'Unlock Pro',
+              features: features,
+              plans: oneTimePlans,
+              embedded: true,
+              layoutType: PaywallLayoutType.oneTime,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('One-time'), findsNothing);
+      expect(find.text('Pay once, keep access forever.'), findsNothing);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is RichText &&
+              widget.text.toPlainText().contains('for life'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('calls purchase handler and shows success state', (tester) async {
     await tester.pumpWidget(
