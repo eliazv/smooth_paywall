@@ -1,3 +1,12 @@
+## 0.0.5
+
+- Added automatic plan layout switching: 1-2 plans stay side by side, 3+ plans stack vertically.
+- Added `lifetime`-friendly rendering with `for life` suffix support and cleaner one-time plan cards.
+- Added `showDefaultHeaderIcon` to hide the default top icon and compact the header.
+- Added `useFloatingPlanSheet` to switch between floating and attached bottom-sheet purchase panels.
+- Simplified title styling, close button styling, plan selection borders, and plan card spacing.
+- Improved example app with focused controls for plan count, one-time/subscription mode, discounts, header icon, and floating sheet.
+
 ## 0.0.4
 
 - Refined README cross-links to published smooth packages only.
