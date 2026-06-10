@@ -1,3 +1,18 @@
+## 0.0.7
+
+- Refined close button chrome without shrinking the close icon itself.
+- Improved paywall content spacing and feature readability.
+- Added better support for host apps that surface free-trial messaging in the feature list.
+- Further polished background composition for embedded production paywalls.
+
+## 0.0.6
+
+- Added full text override support for subscribed and restore status labels, including secondary subscribed banner text.
+- Improved host-app integration for RevenueCat-driven monthly, annual, and lifetime plans.
+- Fixed bottom purchase sheet scrolling by dynamically reserving space for the action panel.
+- Made the purchase sheet fully opaque and refined adaptive theming for real app embedding.
+- Improved subscribed-state CTA handling so apps can route users to manage or continue actions cleanly.
+
 ## 0.0.5
 
 - Added automatic plan layout switching: 1-2 plans stay side by side, 3+ plans stack vertically.

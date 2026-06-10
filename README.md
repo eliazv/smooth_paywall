@@ -6,7 +6,7 @@
 
 A smooth, production-ready paywall UI for Flutter apps.
 
-Build elegant monetization screens with configurable themes, layouts and interaction states.
+Build elegant monetization screens with configurable themes, layouts, and interaction states.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/eliazv/smooth_paywall/master/assets/readme/white.gif" width="45%" alt="Smooth Paywall White" />
@@ -20,7 +20,7 @@ Most paywall implementations are tightly coupled to billing SDK details or hardc
 `smooth_paywall` focuses on:
 
 - Reusable UI for real products
-- Clear separation between UI, logic and configuration
+- Clear separation between UI, logic, and configuration
 - Flexibility for subscriptions and one-time purchase layouts
 
 ## Features
@@ -28,67 +28,96 @@ Most paywall implementations are tightly coupled to billing SDK details or hardc
 - Modern paywall UI with dark mode support
 - Subscription and one-time layouts
 - Built-in states: `idle`, `loading`, `error`, `success`
-- Accessibility-ready semantics on plans, features and CTA
-- Configurable theme, spacing, typography and animation behavior
+- Automatic plan layout switching for `1`, `2`, or `3+` plans
+- Optional floating or attached bottom purchase panel
+- Optional default header icon
+- Discount-ready plan cards via `originalPrice`
 - Can run standalone or be embedded in custom containers
-- Optional integration with `smooth_bottom_sheet` (without package dependency)
+- Optional integration with `smooth_bottom_sheet` without package dependency
 
 ## Installation
 
 ```yaml
 dependencies:
-  smooth_paywall: ^0.0.4
+  smooth_paywall: ^0.0.5
 ```
 
-## Usage
+## Basic usage
 
 ```dart
+import 'package:flutter/material.dart';
 import 'package:smooth_paywall/smooth_paywall.dart';
 
 SmoothPaywall(
-	title: 'Unlock Premium',
-	subtitle: 'Choose the best plan for you.',
-	showDefaultHeaderIcon: false,
-	useFloatingPlanSheet: false,
-	features: const [
-		PaywallFeature(title: 'No ads', icon: Icons.block),
-		PaywallFeature(title: 'Priority support', icon: Icons.support_agent),
-	],
-	plans: const [
-		PaywallPlan(
-			id: 'yearly',
-			title: 'Yearly',
-			priceLabel: '€24.99',
-			originalPrice: '€39.99',
-			periodLabel: '/year',
-			badge: 'Best value',
-		),
-		PaywallPlan(
-			id: 'monthly',
-			title: 'Monthly',
-			priceLabel: '€4.99',
-			periodLabel: '/month',
-		),
-		PaywallPlan(
-			id: 'lifetime',
-			title: 'Lifetime',
-			priceLabel: '€49.99',
-			badge: 'One-time',
-			description: 'Pay once, keep Premium forever.',
-		),
-	],
-	onPurchase: (selectedPlan) async {
-		// Connect your billing flow and return action status.
-		return const PaywallActionResult.success();
-	},
+  title: 'Unlock Premium',
+  subtitle: 'Choose the best plan for you.',
+  showDefaultHeaderIcon: false,
+  useFloatingPlanSheet: false,
+  features: const [
+    PaywallFeature(title: 'No ads', icon: Icons.block),
+    PaywallFeature(title: 'Priority support', icon: Icons.support_agent),
+  ],
+  plans: const [
+    PaywallPlan(
+      id: 'yearly',
+      title: 'Yearly',
+      priceLabel: '\$24.99',
+      originalPrice: '\$39.99',
+      periodLabel: '/year',
+      badge: 'Best value',
+    ),
+    PaywallPlan(
+      id: 'monthly',
+      title: 'Monthly',
+      priceLabel: '\$4.99',
+      periodLabel: '/month',
+    ),
+    PaywallPlan(
+      id: 'lifetime',
+      title: 'Lifetime',
+      priceLabel: '\$49.99',
+    ),
+  ],
+  onPurchase: (selectedPlan) async {
+    return const PaywallActionResult.success();
+  },
 )
 ```
 
-When `plans.length` is `1` or `2`, plans are displayed side by side. With `3` or more plans, the paywall automatically switches to a single-column stack for cleaner spacing and better readability.
-The title is left-aligned, and you can hide the default header icon with `showDefaultHeaderIcon: false`.
-Set `useFloatingPlanSheet: false` to switch the lower card from floating to an attached bottom-sheet style.
-In `PaywallLayoutType.oneTime`, badges and descriptions are hidden on the plan card and the price automatically shows `for life` when no `periodLabel` is provided.
-Use `originalPrice` to show a struck-through old price above the current discounted price.
+## Plan configuration
+
+Use `plans` and `layoutType` together:
+
+- `PaywallLayoutType.subscription` is for recurring plans like `monthly` and `yearly`.
+- `PaywallLayoutType.oneTime` is for permanent unlocks like `lifetime`.
+- With `1` or `2` plans, cards stay side by side.
+- With `3` or more plans, cards automatically switch to one card per row.
+
+Recommended plan setup:
+
+- `monthly`: set `priceLabel` and `periodLabel: '/month'`
+- `yearly`: set `priceLabel`, optional `originalPrice`, and `periodLabel: '/year'`
+- `lifetime`: set `priceLabel` only; the widget automatically shows `for life`
+
+Discount setup:
+
+- Use `priceLabel` for the current price.
+- Use `originalPrice` for the old price shown struck through.
+- `originalPrice` works for both subscription and lifetime plans.
+
+One-time behavior:
+
+- In `PaywallLayoutType.oneTime`, the plan chip is hidden.
+- In `PaywallLayoutType.oneTime`, plan descriptions are hidden inside the price card.
+- If a plan has no `periodLabel` and is `lifetime` or `oneTime`, the widget shows `for life`.
+
+## Layout options
+
+- `showDefaultHeaderIcon: false` removes the built-in top icon and pulls content higher.
+- `useFloatingPlanSheet: true` keeps the lower purchase area as a floating card.
+- `useFloatingPlanSheet: false` makes the lower purchase area attached to the edges like a bottom sheet.
+- The title is left-aligned and rendered as plain bold text.
+- Selected plans use a colored border without a filled background.
 
 ## Optional integration with smooth_bottom_sheet
 
@@ -96,13 +125,13 @@ Use `originalPrice` to show a struck-through old price above the current discoun
 
 ```dart
 showSmoothBottomSheet(
-	context: context,
-	title: 'Premium',
-	child: SmoothPaywall(
-		embedded: true,
-		features: features,
-		plans: plans,
-	),
+  context: context,
+  title: 'Premium',
+  child: SmoothPaywall(
+    embedded: true,
+    features: features,
+    plans: plans,
+  ),
 );
 ```
 
@@ -111,17 +140,19 @@ showSmoothBottomSheet(
 You can customize:
 
 - Complete color system via `SmoothPaywallTheme`
-- Sizes, spacing and structure via `SmoothPaywallLayout`
+- Sizes, spacing, and structure via `SmoothPaywallLayout`
 - Motion timings and transitions via `SmoothPaywallAnimation`
-- Text labels, legal actions, restore flow and close behavior
+- Text labels, legal actions, restore flow, and close behavior
 
 ## Example app
 
 See `example/lib/main.dart` for a complete demo with:
 
-- Standalone full-screen paywall presentation
-- Optional `smooth_bottom_sheet` wrapper
-- Simulated success and error purchase states
+- Subscription vs one-time mode
+- Two plans vs three plans
+- Discount on/off
+- Header icon on/off
+- Floating vs attached bottom panel
 
 ## Author
 

@@ -14,6 +14,7 @@ class SmoothPaywallTheme {
   final TextStyle subtitleStyle;
   final TextStyle bodyStyle;
   final TextStyle ctaTextStyle;
+
   /// Gradient colors for the title text. Null = default gold/accent gradient.
   final List<Color>? titleGradientColors;
 
@@ -100,10 +101,55 @@ class SmoothPaywallTheme {
   }
 
   factory SmoothPaywallTheme.adaptive(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark
-        ? SmoothPaywallTheme.dark()
-        : SmoothPaywallTheme.light();
+    return SmoothPaywallTheme.fromColorScheme(Theme.of(context).colorScheme);
+  }
+
+  factory SmoothPaywallTheme.fromColorScheme(ColorScheme colorScheme) {
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final primary = colorScheme.primary;
+    final accent = Color.lerp(primary, colorScheme.secondary, 0.35) ?? primary;
+    final textColor = colorScheme.onSurface;
+    final subtitleColor = colorScheme.onSurfaceVariant;
+
+    return SmoothPaywallTheme(
+      backgroundTop:
+          Color.lerp(
+            colorScheme.surface,
+            primary.withValues(alpha: isDark ? 0.2 : 0.08),
+            0.6,
+          ) ??
+          colorScheme.surface,
+      backgroundBottom: colorScheme.surface,
+      cardColor: colorScheme.surface,
+      borderColor: colorScheme.outlineVariant.withValues(
+        alpha: isDark ? 0.6 : 0.8,
+      ),
+      primaryColor: primary,
+      accentColor: accent,
+      featureIconBackground: primary.withValues(alpha: 0.12),
+      errorColor: colorScheme.error,
+      titleStyle: TextStyle(
+        color: textColor,
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+      ),
+      subtitleStyle: TextStyle(
+        color: subtitleColor,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyStyle: TextStyle(
+        color: textColor,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      ctaTextStyle: TextStyle(
+        color: colorScheme.onPrimary,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+      ),
+      titleGradientColors: [primary, accent],
+    );
   }
 
   SmoothPaywallTheme copyWith({

@@ -10,129 +10,69 @@ import '../models/paywall_plan.dart';
 
 typedef PaywallPurchaseHandler =
     Future<PaywallActionResult> Function(PaywallPlan selectedPlan);
+typedef PaywallSubscribedAction = Future<void> Function();
+typedef PaywallSubscribedSecondaryTextBuilder =
+    String Function(DateTime? subscriptionExpiryDate);
 
 /// A premium, highly customizable paywall widget for Flutter.
-///
-/// It supports features like list of benefits, multiple subscription plans,
-/// custom theme and layout, and integrated state management via [SmoothPaywallController].
 class SmoothPaywall extends StatefulWidget {
-  /// The main title of the paywall.
   final String title;
-
-  /// A subtitle displayed below the title.
   final String? subtitle;
-
-  /// The list of features/benefits to display.
   final List<PaywallFeature> features;
-
-  /// The list of purchase plans available.
   final List<PaywallPlan> plans;
-
-  /// The label for the primary call-to-action button.
   final String ctaLabel;
-
-  /// The label for the restore purchases action.
   final String restoreLabel;
-
-  /// The label for the terms of service link.
   final String termsLabel;
-
-  /// The label for the privacy policy link.
   final String privacyLabel;
-
-  /// Custom label for the active status (e.g. "Subscribed").
   final String? statusActiveLabel;
-
-  /// Custom label for error fallback messages.
   final String? statusErrorFallbackLabel;
-
-  /// Whether to show the close button in the top corner.
   final bool showCloseButton;
-
-  /// Whether to show the restore action button.
   final bool showRestoreAction;
-
-  /// Whether to show the legal actions (terms, privacy).
   final bool showLegalActions;
-
-  /// Whether the paywall is embedded in another view (e.g. not a full-screen scaffold).
   final bool embedded;
-
-  /// The layout style (subscription or one-time).
   final PaywallLayoutType layoutType;
-
-  /// The theme configuration.
   final SmoothPaywallTheme? theme;
-
-  /// The layout configuration.
   final SmoothPaywallLayout layout;
-
-  /// The entrance animation configuration.
   final SmoothPaywallAnimation animation;
-
-  /// The controller for managing the paywall state.
   final SmoothPaywallController? controller;
-
-  /// Callback triggered when the primary CTA is pressed to perform a purchase.
   final PaywallPurchaseHandler? onPurchase;
-
-  /// Callback triggered when the restore button is pressed.
   final Future<void> Function()? onRestore;
-
-  /// Callback triggered when the terms of service link is pressed.
   final VoidCallback? onTermsTap;
-
-  /// Callback triggered when the privacy policy link is pressed.
   final VoidCallback? onPrivacyTap;
-
-  /// Callback triggered when the close button is pressed.
   final VoidCallback? onClose;
-
-  /// Callback triggered after a successful purchase.
   final void Function(PaywallPlan plan)? onSuccess;
-
-  /// Callback triggered when an error occurs.
   final void Function(String message)? onError;
-
-  /// An optional widget to display as a logo in the header.
+  final PaywallSubscribedAction? onSubscribedAction;
   final Widget? headerLogo;
-
-  /// Whether to show the default premium icon when no custom header media is provided.
   final bool showDefaultHeaderIcon;
-
-  /// Whether to show the background gradient.
-  /// When false, uses solid background color from theme.
   final bool showGradientBackground;
-
-  /// Whether the bottom purchase panel should float above the edges.
-  /// When false, it behaves like an attached bottom sheet.
   final bool useFloatingPlanSheet;
-
-  /// An optional asset path for a header illustration.
   final String? headerImagePath;
-
-  /// Whether the user is currently subscribed.
   final bool isSubscribed;
-
-  /// The expiry date of the current subscription.
   final DateTime? subscriptionExpiryDate;
-
-  /// CTA label to show when the user is already subscribed.
   final String? subscribedCtaLabel;
-
-  /// Status label to show when the user is already subscribed.
   final String? subscribedStatusLabel;
+  final String? subscribedSecondaryLabel;
+  final PaywallSubscribedSecondaryTextBuilder? subscribedSecondaryTextBuilder;
+  final String restoringStatusLabel;
+  final String restoreSuccessLabel;
+  final String purchaseSuccessLabel;
+  final String purchaseErrorLabel;
+  final String genericSuccessLabel;
+  final String genericErrorLabel;
+  final String subscribedDefaultStatusLabel;
+  final String subscribedDefaultCtaLabel;
+  final String lifetimePeriodLabel;
 
-  /// Creates a [SmoothPaywall].
   const SmoothPaywall({
     super.key,
     required this.features,
     required this.plans,
     this.title = 'Go Premium',
     this.subtitle,
-    this.ctaLabel = 'Get Started',
-    this.restoreLabel = 'Ripristina',
-    this.termsLabel = 'Termini',
+    this.ctaLabel = 'Continue',
+    this.restoreLabel = 'Restore',
+    this.termsLabel = 'Terms',
     this.privacyLabel = 'Privacy',
     this.statusActiveLabel,
     this.statusErrorFallbackLabel,
@@ -152,6 +92,7 @@ class SmoothPaywall extends StatefulWidget {
     this.onClose,
     this.onSuccess,
     this.onError,
+    this.onSubscribedAction,
     this.headerLogo,
     this.showDefaultHeaderIcon = true,
     this.headerImagePath,
@@ -159,6 +100,17 @@ class SmoothPaywall extends StatefulWidget {
     this.subscriptionExpiryDate,
     this.subscribedCtaLabel,
     this.subscribedStatusLabel,
+    this.subscribedSecondaryLabel,
+    this.subscribedSecondaryTextBuilder,
+    this.restoringStatusLabel = 'Restoring...',
+    this.restoreSuccessLabel = 'Purchases restored',
+    this.purchaseSuccessLabel = 'Purchase successful',
+    this.purchaseErrorLabel = 'Purchase failed',
+    this.genericSuccessLabel = 'Operation completed',
+    this.genericErrorLabel = 'Something went wrong',
+    this.subscribedDefaultStatusLabel = 'Active subscription',
+    this.subscribedDefaultCtaLabel = 'Manage subscription',
+    this.lifetimePeriodLabel = ' for life',
     this.showGradientBackground = true,
     this.useFloatingPlanSheet = true,
   }) : assert(plans.length > 0, 'plans cannot be empty');
@@ -170,14 +122,16 @@ class SmoothPaywall extends StatefulWidget {
 class _SmoothPaywallState extends State<SmoothPaywall> {
   late SmoothPaywallController _controller;
   bool _ownsController = false;
+  final GlobalKey _sheetKey = GlobalKey();
+  double _sheetHeight = 248;
 
   @override
   void initState() {
     super.initState();
     _ownsController = widget.controller == null;
     _controller = widget.controller ?? SmoothPaywallController();
-    _controller.setInitialPlan(widget.plans.first.id);
     _controller.addListener(_onControllerChanged);
+    _syncSelectedPlanWithWidget();
   }
 
   @override
@@ -190,15 +144,42 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       }
       _ownsController = widget.controller == null;
       _controller = widget.controller ?? SmoothPaywallController();
-      _controller.setInitialPlan(widget.plans.first.id);
       _controller.addListener(_onControllerChanged);
     }
+    _syncSelectedPlanWithWidget();
+  }
+
+  void _syncSelectedPlanWithWidget() {
+    if (widget.plans.isEmpty) return;
+    final selectedId = _controller.selectedPlanId;
+    final hasSelectedPlan = widget.plans.any((plan) => plan.id == selectedId);
+    if (hasSelectedPlan) return;
+
+    final recommendedPlan = widget.plans.where((plan) => plan.isRecommended);
+    final fallbackPlan = recommendedPlan.isNotEmpty
+        ? recommendedPlan.first
+        : widget.plans.first;
+    _controller.selectPlan(fallbackPlan.id);
   }
 
   void _onControllerChanged() {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void _syncSheetHeight() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final context = _sheetKey.currentContext;
+      final box = context?.findRenderObject() as RenderBox?;
+      final nextHeight = box?.size.height;
+      if (nextHeight == null) return;
+      if ((_sheetHeight - nextHeight).abs() < 1) return;
+      setState(() {
+        _sheetHeight = nextHeight;
+      });
+    });
   }
 
   @override
@@ -241,7 +222,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
           message:
               result.message ??
               widget.statusActiveLabel ??
-              'Abbonamento attivo',
+              widget.purchaseSuccessLabel,
         );
         widget.onSuccess?.call(_selectedPlan);
         return;
@@ -251,7 +232,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
         final message =
             result.message ??
             widget.statusErrorFallbackLabel ??
-            'Errore durante l\'acquisto';
+            widget.purchaseErrorLabel;
         _controller.setState(PaywallActionState.error, message: message);
         widget.onError?.call(message);
         return;
@@ -269,13 +250,33 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
     if (widget.onRestore == null) {
       return;
     }
-    _controller.setState(PaywallActionState.loading, message: 'Ripristino...');
+    _controller.setState(
+      PaywallActionState.loading,
+      message: widget.restoringStatusLabel,
+    );
     try {
       await widget.onRestore!.call();
       _controller.setState(
         PaywallActionState.success,
-        message: 'Acquisti ripristinati',
+        message: widget.restoreSuccessLabel,
       );
+    } catch (error) {
+      final message = error.toString();
+      _controller.setState(PaywallActionState.error, message: message);
+      widget.onError?.call(message);
+    }
+  }
+
+  Future<void> _handleSubscribedAction() async {
+    if (widget.onSubscribedAction == null ||
+        _controller.state == PaywallActionState.loading) {
+      return;
+    }
+
+    _controller.setState(PaywallActionState.loading);
+    try {
+      await widget.onSubscribedAction!.call();
+      _controller.resetStatus();
     } catch (error) {
       final message = error.toString();
       _controller.setState(PaywallActionState.error, message: message);
@@ -286,29 +287,15 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme ?? SmoothPaywallTheme.adaptive(context);
+    _syncSheetHeight();
 
     final stack = Stack(
       fit: StackFit.expand,
       children: [
         if (widget.showGradientBackground)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.primaryColor.withValues(alpha: 0.15),
-                    theme.backgroundBottom,
-                    theme.backgroundBottom,
-                  ],
-                  stops: const [0, 0.3, 1],
-                ),
-              ),
-            ),
-          ),
+          Positioned.fill(child: _buildSoftBackground(theme)),
         SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 248),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, _sheetHeight + 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -317,7 +304,10 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                 _buildHeaderIllustration(theme),
                 const SizedBox(height: 12),
               ],
-              _buildPremiumTitle(theme),
+              Padding(
+                padding: const EdgeInsets.only(right: 52),
+                child: _buildPremiumTitle(theme),
+              ),
               if (widget.subtitle != null) ...[
                 const SizedBox(height: 6),
                 Text(
@@ -345,11 +335,25 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
           Positioned(
             top: 8,
             right: 8,
-            child: IconButton(
-              onPressed:
-                  widget.onClose ?? () => Navigator.of(context).maybePop(),
-              splashRadius: 18,
-              icon: Icon(Icons.close, color: theme.bodyStyle.color, size: 20),
+            child: Material(
+              color: theme.cardColor.withValues(alpha: 0.64),
+              shape: const CircleBorder(),
+              elevation: 0,
+              child: IconButton(
+                onPressed:
+                    widget.onClose ?? () => Navigator.of(context).maybePop(),
+                splashRadius: 16,
+                constraints: const BoxConstraints.tightFor(
+                  width: 34,
+                  height: 34,
+                ),
+                padding: EdgeInsets.zero,
+                icon: Icon(
+                  Icons.close,
+                  color: theme.bodyStyle.color,
+                  size: 20,
+                ),
+              ),
             ),
           ),
       ],
@@ -388,6 +392,57 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       widget.headerLogo != null ||
       widget.headerImagePath != null ||
       widget.showDefaultHeaderIcon;
+
+  Widget _buildSoftBackground(SmoothPaywallTheme theme) {
+    return Container(
+      color: theme.backgroundBottom,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned(
+            top: -120,
+            left: -90,
+            child: _BackgroundGlow(
+              size: 280,
+              color: theme.primaryColor.withValues(alpha: 0.14),
+            ),
+          ),
+          Positioned(
+            top: 140,
+            right: -110,
+            child: _BackgroundGlow(
+              size: 260,
+              color: theme.accentColor.withValues(alpha: 0.12),
+            ),
+          ),
+          Positioned(
+            bottom: 160,
+            left: 20,
+            child: _BackgroundGlow(
+              size: 220,
+              color: theme.primaryColor.withValues(alpha: 0.08),
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.backgroundTop.withValues(alpha: 0.78),
+                    theme.backgroundBottom.withValues(alpha: 0.88),
+                    theme.backgroundBottom,
+                  ],
+                  stops: const [0, 0.45, 1],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeaderIllustration(SmoothPaywallTheme theme) {
     if (widget.headerLogo != null) {
@@ -437,13 +492,13 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   }
 
   Widget _buildPremiumTitle(SmoothPaywallTheme theme) {
-    const fontSize = 28.0;
     return Text(
       widget.title,
       textAlign: TextAlign.left,
-      style: TextStyle(
-        fontSize: fontSize,
-        fontWeight: FontWeight.w700,
+      style: theme.titleStyle.copyWith(
+        fontSize: 30,
+        fontWeight: FontWeight.w800,
+        height: 0.95,
         color: theme.titleStyle.color ?? theme.bodyStyle.color ?? Colors.white,
       ),
     );
@@ -454,7 +509,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       children: widget.features
           .map(
             (feature) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -462,7 +517,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 4,
+                      vertical: 6,
                       horizontal: 4,
                     ),
                     child: Row(
@@ -475,12 +530,19 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
                         else
                           Icon(
                             feature.icon ?? Icons.check,
-                            size: 22,
+                            size: 26,
                             color: theme.primaryColor,
                           ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Text(feature.title, style: theme.bodyStyle),
+                          child: Text(
+                            feature.title,
+                            style: theme.bodyStyle.copyWith(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -494,32 +556,35 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   }
 
   Widget _buildBottomActions(SmoothPaywallTheme theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Wrap(
+      alignment: WrapAlignment.spaceEvenly,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 24,
+      runSpacing: 12,
       children: [
         if (widget.showRestoreAction)
           _BottomActionButton(
-            icon: Icons.restore,
             label: widget.restoreLabel,
             onTap: _handleRestore,
             primaryColor: theme.primaryColor,
             labelColor: theme.bodyStyle.color ?? Colors.white,
+            showIcon: false,
           ),
         if (widget.showLegalActions)
           _BottomActionButton(
-            icon: Icons.privacy_tip,
             label: widget.privacyLabel,
             onTap: widget.onPrivacyTap,
             primaryColor: theme.primaryColor,
             labelColor: theme.bodyStyle.color ?? Colors.white,
+            showIcon: false,
           ),
         if (widget.showLegalActions)
           _BottomActionButton(
-            icon: Icons.article,
             label: widget.termsLabel,
             onTap: widget.onTermsTap,
             primaryColor: theme.primaryColor,
             labelColor: theme.bodyStyle.color ?? Colors.white,
+            showIcon: false,
           ),
       ],
     );
@@ -529,6 +594,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
     final floating = widget.useFloatingPlanSheet;
 
     return Container(
+      key: _sheetKey,
       margin: floating
           ? const EdgeInsets.fromLTRB(12, 8, 12, 12)
           : EdgeInsets.zero,
@@ -556,7 +622,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
           if (widget.isSubscribed) _buildSubscribedBanner(theme),
           if (!widget.isSubscribed) _buildSubscriptionPlans(theme),
           if (!widget.isSubscribed) const SizedBox(height: 16),
-          if (!widget.isSubscribed) _buildStatusBanner(theme),
+          _buildStatusBanner(theme),
           _buildCtaButton(theme),
         ],
       ),
@@ -564,10 +630,11 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   }
 
   Widget _buildSubscribedBanner(SmoothPaywallTheme theme) {
-    final expiryDate = widget.subscriptionExpiryDate;
-    final expiryText = expiryDate != null
-        ? 'Rinnovo il ${expiryDate.day}/${expiryDate.month}/${expiryDate.year}'
-        : null;
+    final expiryText =
+        widget.subscribedSecondaryLabel ??
+        widget.subscribedSecondaryTextBuilder?.call(
+          widget.subscriptionExpiryDate,
+        );
 
     return Container(
       width: double.infinity,
@@ -587,7 +654,8 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.subscribedStatusLabel ?? 'Active subscription',
+                  widget.subscribedStatusLabel ??
+                      widget.subscribedDefaultStatusLabel,
                   style: TextStyle(
                     color: theme.bodyStyle.color,
                     fontWeight: FontWeight.w700,
@@ -621,7 +689,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
       final periodLabel =
           plan.periodLabel ??
           (widget.layoutType == PaywallLayoutType.oneTime || isLifetimePlan
-              ? ' for life'
+              ? widget.lifetimePeriodLabel
               : null);
 
       return GestureDetector(
@@ -673,7 +741,7 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
     final color = isError ? theme.errorColor : theme.primaryColor;
     final text =
         _controller.message ??
-        (isError ? 'Errore durante l\'acquisto' : 'Operazione completata');
+        (isError ? widget.genericErrorLabel : widget.genericSuccessLabel);
 
     return Container(
       width: double.infinity,
@@ -706,46 +774,84 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
     final loading = _controller.state == PaywallActionState.loading;
     final subscribed = widget.isSubscribed;
     final label = subscribed
-        ? (widget.subscribedCtaLabel ?? 'Abbonato')
+        ? (widget.subscribedCtaLabel ?? widget.subscribedDefaultCtaLabel)
         : widget.ctaLabel;
+    final canTapSubscribed =
+        subscribed && widget.onSubscribedAction != null && !loading;
+    final onPressed = subscribed
+        ? (canTapSubscribed ? _handleSubscribedAction : null)
+        : (loading ? null : _handlePurchase);
 
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: (loading || subscribed) ? null : _handlePurchase,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          elevation: subscribed ? 0 : 8,
+          elevation: subscribed && !canTapSubscribed ? 0 : 8,
           shadowColor: theme.primaryColor.withValues(alpha: 0.5),
-          disabledBackgroundColor: subscribed
+          disabledBackgroundColor: subscribed && !canTapSubscribed
               ? theme.primaryColor.withValues(alpha: 0.15)
               : null,
         ),
         child: subscribed
-            ? Container(
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: theme.primaryColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: theme.ctaTextStyle.copyWith(
-                        color: theme.primaryColor,
+            ? canTapSubscribed
+                  ? Ink(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [theme.primaryColor, theme.accentColor],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                    ),
-                  ],
-                ),
-              )
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: loading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.settings_outlined,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(label, style: theme.ctaTextStyle),
+                                ],
+                              ),
+                      ),
+                    )
+                  : Container(
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: theme.primaryColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            label,
+                            style: theme.ctaTextStyle.copyWith(
+                              color: theme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
             : Ink(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -773,18 +879,18 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
 }
 
 class _BottomActionButton extends StatelessWidget {
-  final IconData icon;
   final String label;
   final VoidCallback? onTap;
   final Color primaryColor;
   final Color labelColor;
+  final bool showIcon;
 
   const _BottomActionButton({
-    required this.icon,
     required this.label,
     required this.onTap,
     required this.primaryColor,
     required this.labelColor,
+    this.showIcon = true,
   });
 
   @override
@@ -792,27 +898,59 @@ class _BottomActionButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showIcon) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.circle, color: primaryColor, size: 22),
+              ),
+              const SizedBox(height: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: showIcon
+                    ? labelColor.withValues(alpha: 0.85)
+                    : primaryColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                decoration: showIcon ? null : TextDecoration.underline,
+                decorationColor: primaryColor.withValues(alpha: 0.7),
+              ),
             ),
-            child: Icon(icon, color: primaryColor, size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BackgroundGlow extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _BackgroundGlow({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [color, color.withValues(alpha: 0)],
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: labelColor.withValues(alpha: 0.85),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
