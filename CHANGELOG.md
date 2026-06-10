@@ -1,3 +1,8 @@
+## 0.0.4
+
+- Refined README cross-links to published smooth packages only.
+- Aligned release documentation with the new package version.
+
 ## 0.0.3
 
 - Fixed README GIF previews for pub.dev by using absolute GitHub URLs.

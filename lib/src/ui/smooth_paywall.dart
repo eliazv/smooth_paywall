@@ -629,32 +629,41 @@ class _SmoothPaywallState extends State<SmoothPaywall> {
   }
 
   Widget _buildSubscriptionPlans(SmoothPaywallTheme theme) {
-    return Row(
-      children: widget.plans.map((plan) {
-        final isSelected = plan.id == _selectedPlan.id;
-        final index = widget.plans.indexOf(plan);
+    final planCards = widget.plans.map((plan) {
+      final isSelected = plan.id == _selectedPlan.id;
 
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => _controller.selectPlan(plan.id),
-            child: Container(
-              margin: EdgeInsets.only(
-                left: index == 0 ? 0 : 8,
-                right: index == widget.plans.length - 1 ? 0 : 8,
-              ),
-              child: _SubscriptionPlanCard(
-                plan: plan,
-                isSelected: isSelected,
-                primaryColor: theme.primaryColor,
-                accentColor: theme.accentColor,
-                cardColor: theme.cardColor,
-                borderColor: theme.borderColor,
-                textColor: theme.bodyStyle.color ?? Colors.white,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+      return GestureDetector(
+        onTap: () => _controller.selectPlan(plan.id),
+        child: _SubscriptionPlanCard(
+          plan: plan,
+          isSelected: isSelected,
+          primaryColor: theme.primaryColor,
+          accentColor: theme.accentColor,
+          cardColor: theme.cardColor,
+          borderColor: theme.borderColor,
+          textColor: theme.bodyStyle.color ?? Colors.white,
+        ),
+      );
+    }).toList();
+
+    if (widget.plans.length >= 3) {
+      return Column(
+        children: [
+          for (var i = 0; i < planCards.length; i++) ...[
+            if (i > 0) SizedBox(height: widget.layout.planSpacing),
+            SizedBox(width: double.infinity, child: planCards[i]),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        for (var i = 0; i < planCards.length; i++) ...[
+          if (i > 0) SizedBox(width: widget.layout.planSpacing),
+          Expanded(child: planCards[i]),
+        ],
+      ],
     );
   }
 

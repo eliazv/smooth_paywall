@@ -19,8 +19,9 @@ class _SmoothPaywallExampleAppState extends State<SmoothPaywallExampleApp> {
 
   void _toggleTheme() {
     setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      _themeMode = _themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark;
     });
   }
 
@@ -109,6 +110,13 @@ class _ExampleHomePageState extends State<_ExampleHomePage> {
       priceLabel: 'EUR 4.99',
       periodLabel: '/month',
     ),
+    PaywallPlan(
+      id: 'lifetime',
+      title: 'Lifetime',
+      priceLabel: 'EUR 49.99',
+      badge: 'One-time',
+      description: 'Pay once, keep Pro forever.',
+    ),
   ];
 
   static const List<PaywallPlan> _oneTimePlans = [
@@ -121,10 +129,9 @@ class _ExampleHomePageState extends State<_ExampleHomePage> {
     ),
   ];
 
-  List<PaywallPlan> get _plans =>
-      _layoutType == PaywallLayoutType.subscription
-          ? _subscriptionPlans
-          : _oneTimePlans;
+  List<PaywallPlan> get _plans => _layoutType == PaywallLayoutType.subscription
+      ? _subscriptionPlans
+      : _oneTimePlans;
 
   bool get _isLight => widget.themeMode == ThemeMode.light;
 
@@ -142,8 +149,9 @@ class _ExampleHomePageState extends State<_ExampleHomePage> {
       layoutType: _layoutType,
       theme: _isLight ? SmoothPaywallTheme.light() : SmoothPaywallTheme.dark(),
       isSubscribed: _simulateSubscribed,
-      subscriptionExpiryDate:
-          _simulateSubscribed ? DateTime(2025, 12, 31) : null,
+      subscriptionExpiryDate: _simulateSubscribed
+          ? DateTime(2025, 12, 31)
+          : null,
       subscribedStatusLabel: 'Pro plan active',
       subscribedCtaLabel: 'Subscribed',
       onPurchase: (selectedPlan) async {
@@ -176,9 +184,7 @@ class _ExampleHomePageState extends State<_ExampleHomePage> {
   }
 
   void _showSnack(String text) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(text)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   @override
@@ -238,8 +244,7 @@ class _ExampleHomePageState extends State<_ExampleHomePage> {
                       title: 'Active subscription',
                       subtitle: 'Shows subscribed UI with expiry date',
                       value: _simulateSubscribed,
-                      onChanged: (v) =>
-                          setState(() => _simulateSubscribed = v),
+                      onChanged: (v) => setState(() => _simulateSubscribed = v),
                     ),
                   ],
                 ),
@@ -288,7 +293,9 @@ class _ExampleHomePageState extends State<_ExampleHomePage> {
                     );
                   },
                   icon: const Icon(Icons.layers_outlined),
-                  label: const Text('Feature detail sheet (smooth_bottom_sheet)'),
+                  label: const Text(
+                    'Feature detail sheet (smooth_bottom_sheet)',
+                  ),
                 ),
                 if (_showEmbedded) ...[
                   const SizedBox(height: 24),

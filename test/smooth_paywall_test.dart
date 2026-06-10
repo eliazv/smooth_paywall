@@ -17,6 +17,29 @@ void main() {
       priceLabel: r'$4.99',
       periodLabel: '/month',
     ),
+    PaywallPlan(
+      id: 'lifetime',
+      title: 'Lifetime',
+      priceLabel: r'$49.99',
+      badge: 'One-time',
+      description: 'Pay once, keep access forever.',
+    ),
+  ];
+
+  const twoPlanLayout = [
+    PaywallPlan(
+      id: 'yearly',
+      title: 'Yearly',
+      priceLabel: r'$24.99',
+      periodLabel: '/year',
+      badge: 'Save 50%',
+    ),
+    PaywallPlan(
+      id: 'monthly',
+      title: 'Monthly',
+      priceLabel: r'$4.99',
+      periodLabel: '/month',
+    ),
   ];
 
   const features = [
@@ -43,7 +66,59 @@ void main() {
 
     expect(find.textContaining('UNLOCK PRO'), findsWidgets);
     expect(find.text('Yearly'), findsOneWidget);
+    expect(find.text('Lifetime'), findsOneWidget);
     expect(find.textContaining('Start now'), findsOneWidget);
+  });
+
+  testWidgets('uses a vertical layout when showing three plans', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            features: features,
+            plans: plans,
+            embedded: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final yearlyTopLeft = tester.getTopLeft(find.text('Yearly'));
+    final monthlyTopLeft = tester.getTopLeft(find.text('Monthly'));
+    final lifetimeTopLeft = tester.getTopLeft(find.text('Lifetime'));
+
+    expect(monthlyTopLeft.dy, greaterThan(yearlyTopLeft.dy));
+    expect(lifetimeTopLeft.dy, greaterThan(monthlyTopLeft.dy));
+  });
+
+  testWidgets('keeps a horizontal layout when showing two plans', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SmoothPaywall(
+            title: 'Unlock Pro',
+            features: features,
+            plans: twoPlanLayout,
+            embedded: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final yearlyTopLeft = tester.getTopLeft(find.text('Yearly'));
+    final monthlyTopLeft = tester.getTopLeft(find.text('Monthly'));
+
+    expect((monthlyTopLeft.dy - yearlyTopLeft.dy).abs(), lessThan(4));
+    expect(monthlyTopLeft.dx, greaterThan(yearlyTopLeft.dx));
   });
 
   testWidgets('subtitle is hidden when null', (tester) async {
@@ -114,8 +189,9 @@ void main() {
     expect(find.text('All set!'), findsOneWidget);
   });
 
-  testWidgets('shows subscribed banner when isSubscribed is true',
-      (tester) async {
+  testWidgets('shows subscribed banner when isSubscribed is true', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(

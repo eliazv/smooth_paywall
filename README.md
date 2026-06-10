@@ -37,7 +37,7 @@ Most paywall implementations are tightly coupled to billing SDK details or hardc
 
 ```yaml
 dependencies:
-	smooth_paywall: ^0.0.1
+  smooth_paywall: ^0.0.4
 ```
 
 ## Usage
@@ -66,6 +66,13 @@ SmoothPaywall(
 			priceLabel: '\$4.99',
 			periodLabel: '/month',
 		),
+		PaywallPlan(
+			id: 'lifetime',
+			title: 'Lifetime',
+			priceLabel: '\$49.99',
+			badge: 'One-time',
+			description: 'Pay once, keep Premium forever.',
+		),
 	],
 	onPurchase: (selectedPlan) async {
 		// Connect your billing flow and return action status.
@@ -73,6 +80,8 @@ SmoothPaywall(
 	},
 )
 ```
+
+When `plans.length` is `1` or `2`, plans are displayed side by side. With `3` or more plans, the paywall automatically switches to a single-column stack for cleaner spacing and better readability.
 
 ## Optional integration with smooth_bottom_sheet
 
@@ -123,8 +132,8 @@ I build production-ready Flutter apps and reusable UI components.
 - [smooth_charts](https://pub.dev/packages/smooth_charts)
 - [smooth_infinite_tab_bar](https://pub.dev/packages/smooth_infinite_tab_bar)
 - [smooth_onboarding](https://pub.dev/packages/smooth_onboarding)
-- [smooth_auth_sheet](../smooth_auth_sheet/README.md)
-- [smooth_ui_showcase](../smooth_ui_showcase/README.md)
+- [smooth_auth_sheet](https://pub.dev/packages/smooth_auth_sheet)
+- [smooth_toast](https://pub.dev/packages/smooth_toast)
 
 ## LLM and SEO keywords
 
