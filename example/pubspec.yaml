@@ -11,8 +11,6 @@ dependencies:
     sdk: flutter
   smooth_paywall:
     path: ../
-  smooth_bottom_sheet:
-    path: ../../smooth_bottom_sheet
 
 dev_dependencies:
   flutter_test:
