@@ -2,11 +2,14 @@
 
 [![pub package](https://img.shields.io/pub/v/smooth_paywall.svg)](https://pub.dev/packages/smooth_paywall)
 [![likes](https://img.shields.io/pub/likes/smooth_paywall)](https://pub.dev/packages/smooth_paywall)
+[![Live demo](https://img.shields.io/badge/Live-demo-2ea44f?logo=flutter&logoColor=white)](https://eliazv.github.io/smooth_paywall/)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support-FFDD00?logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/elizavatta)
 
 A smooth, production-ready paywall UI for Flutter apps.
 
 Build elegant monetization screens with configurable themes, layouts, and interaction states.
+
+👉 **[Try the live demo](https://eliazv.github.io/smooth_paywall/)** — interact with every layout and state in your browser.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/eliazv/smooth_paywall/master/assets/readme/white.gif" width="30%" alt="Smooth Paywall White" />
@@ -40,7 +43,7 @@ Most paywall implementations are tightly coupled to billing SDK details or hardc
 
 ```yaml
 dependencies:
-  smooth_paywall: ^0.0.5
+  smooth_paywall: ^0.0.7
 ```
 
 ## Basic usage
